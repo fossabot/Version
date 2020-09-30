@@ -1,0 +1,21 @@
+{
+  "version": "1.2.3",
+  "strategies": [
+    {
+      "type": "composer"
+    },
+    {
+      "type": "expression",
+      "expression": "/Version: {VERSION}/",
+      "replacement": "Version: {VERSION}",
+      "name": "README.md"
+    },
+    {
+      "type": "expression",
+      "expression": "/public const VERSION = '{VERSION}';/",
+      "replacement": "public const VERSION = '{VERSION}';",
+      "path": "src",
+      "name": "Application.php"
+    }
+  ]
+}

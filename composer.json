@@ -1,0 +1,43 @@
+{
+  "name": "sourecode/version",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "chapterjason",
+      "email": "jason@sourecode.dev"
+    }
+  ],
+  "bin": "./bin/version.php",
+  "autoload": {
+    "psr-4": {
+      "SoureCode\\Version\\": "./src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SoureCode\\Version\\Tests\\": "./Tests/"
+    }
+  },
+  "require": {
+    "php": ">=7.4",
+    "ext-json": "*",
+    "sourecode/semantic-version": "dev-master",
+    "symfony/console": "^5.1",
+    "symfony/config": "^5.1",
+    "symfony/process": "^5.1",
+    "symfony/finder": "^5.1",
+    "symfony/filesystem": "^5.1"
+  },
+  "require-dev": {
+    "vimeo/psalm": "^3.16",
+    "phpunit/phpunit": "^9.3"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "extra": {
+    "branch-alias": {
+      "dev-master": "0.1-dev"
+    }
+  }
+}
