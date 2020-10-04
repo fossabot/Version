@@ -50,4 +50,7 @@ jobs:
         run: php-cs-fixer fix --format=checkstyle | cs2pr
 
       - name: Test
-        run: vendor/bin/phpunit --testdox
+        run: vendor/bin/phpunit --coverage-clover coverage.xml
+
+      - name: Upload coverage report
+        run: bash <(curl -s https://codecov.io/bash)
