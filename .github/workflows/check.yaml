@@ -49,5 +49,9 @@ jobs:
       - name: PHP CS Fixer
         run: php-cs-fixer fix --format=checkstyle | cs2pr
 
-      - name: Tests
-        run: vendor/bin/phpunit
+      - name: Test
+        uses: theomessin/action-phpcov
+        with:
+          now_token: ${{ secrets.NOW_TOKEN }}
+          now_project: "SoureCode/Version"
+          phpunit: "./vendor/bin/phpunit --testdox"
