@@ -17,7 +17,6 @@ use function array_keys;
 use function array_map;
 use function implode;
 use function in_array;
-use function is_array;
 use function preg_match;
 use function preg_quote;
 use function preg_replace;
@@ -48,14 +47,14 @@ class Pattern
         $this->createExpression();
     }
 
-    private function createExpression()
+    private function createExpression(): void
     {
         $escapedPattern = preg_quote($this->pattern, '/');
         $escapedPattern = preg_replace('/\\\{([A-Z]+)\\\}/', '{$1}', $escapedPattern);
         $placeholder = static::getPlaceholderMapping();
         $expression = preg_replace_callback(
             '/{([A-Z]+)}/',
-            function ($matches) use ($placeholder) {
+            function (array $matches) use ($placeholder) {
                 $match = $matches[1];
 
                 if (!array_key_exists($match, $placeholder)) {
@@ -69,14 +68,17 @@ class Pattern
             $escapedPattern
         );
 
-        if (null === $expression || is_array($expression)) {
+        if (null === $expression) {
             throw new InvalidArgumentException('Invalid pattern.');
         }
 
         $this->expression = '/'.$expression.'/';
     }
 
-    public static function getPlaceholderMapping()
+    /**
+     * @return array<string, string>
+     */
+    public static function getPlaceholderMapping(): array
     {
         if (!static::$placeholderMapping) {
             static::$placeholderMapping = [
@@ -141,14 +143,22 @@ class Pattern
         return null;
     }
 
-    private function extractNamedGroups($matches)
+    /**
+     * @param string[] $matches
+     */
+    private function extractNamedGroups(array $matches): array
     {
-        $keys = array_flip(array_map('strtolower', array_keys(static::$placeholderMapping)));
+        $keys = array_flip(array_map('strtolower', array_keys(static::getPlaceholderMapping())));
 
         return array_intersect_key($matches, $keys);
     }
 
-    private function fixNumericKeys(array $matches)
+    /**
+     * @param string[] $matches
+     *
+     * @return (int|string)[]
+     */
+    private function fixNumericKeys(array $matches): array
     {
         $numericKeys = ['major', 'minor', 'patch'];
 

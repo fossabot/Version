@@ -31,7 +31,7 @@ use Symfony\Component\Config\Loader\FileLoader;
  */
 class JsonFileLoader extends FileLoader
 {
-    public function load($resource, string $type = null)
+    public function load($resource, string $type = null): ?string
     {
         if ($data = file_get_contents($resource)) {
             $contents = json_decode($data, true);

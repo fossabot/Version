@@ -36,7 +36,7 @@ abstract class AbstractStrategy implements StrategyInterface
         return $this->options;
     }
 
-    protected function findFiles()
+    protected function findFiles(): Finder
     {
         $finder = new Finder();
         $finder

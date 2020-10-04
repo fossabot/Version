@@ -10,9 +10,11 @@
 
 namespace SoureCode\Version\Command;
 
+use phpDocumentor\Reflection\Types\Null_;
 use function get_class;
 use function is_array;
 use SoureCode\SemanticVersion\Version;
+use SoureCode\Version\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -28,14 +30,14 @@ class SetCommand extends AbstractVersionCommand
 {
     protected static $defaultName = 'set';
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('set')
             ->setDescription('Set the current version')
             ->addArgument('version', InputArgument::REQUIRED, 'The version');
     }
 
-    protected function interact(InputInterface $input, OutputInterface $output)
+    protected function interact(InputInterface $input, OutputInterface $output): void
     {
         $version = $input->getArgument('version');
 
@@ -45,7 +47,7 @@ class SetCommand extends AbstractVersionCommand
             $version = $io->ask(
                 'Version?',
                 null,
-                function ($value) {
+                function (string $value) {
                     return Version::fromString($value);
                 }
             );
@@ -54,14 +56,20 @@ class SetCommand extends AbstractVersionCommand
         }
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $version = Version::fromString($input->getArgument('version'));
+        $inputVersion = $input->getArgument('version');
+
+        if (!is_string($inputVersion)) {
+            throw new InvalidArgumentException(sprintf('The argument "%s" is invalid.', json_encode($inputVersion)));
+        }
+
+        $version = Version::fromString($inputVersion);
         $configuration = $this->getConfiguration();
         $strategies = $configuration->getStrategies();
 
-        $io->writeln(sprintf('version: %s', $version), OutputInterface::VERBOSITY_VERBOSE);
+        $io->writeln(sprintf('version: %s', (string) $version), OutputInterface::VERBOSITY_VERBOSE);
 
         foreach ($strategies as $strategy) {
             $io->writeln(

@@ -15,6 +15,8 @@ use SoureCode\SemanticVersion\Version;
 use SoureCode\Version\Configuration\Strategy\ComposerStrategyConfiguration;
 use SoureCode\Version\Configuration\Strategy\ExpressionStrategyConfiguration;
 use SoureCode\Version\Configuration\Strategy\NodeStrategyConfiguration;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -39,57 +41,63 @@ class VersionConfiguration extends AbstractConfiguration implements Configuratio
     {
         $treeBuilder = new TreeBuilder('version');
 
+        /**
+         * @var ArrayNodeDefinition $root
+         */
         $root = $treeBuilder->getRootNode();
 
+        /**
+         * @var NodeBuilder $children
+         */
+        $children = $root->children();
+        $root->addDefaultsIfNotSet();
+
         //@formatter:off
-        $root
-            ->addDefaultsIfNotSet()
+        $children
+            ->scalarNode('version')
+                ->isRequired()
+                ->cannotBeEmpty()
+                ->validate()
+                    ->ifString()
+                    ->then(function (string $value) {
+                        return Version::fromString($value);
+                    });
+
+        $strategiesNode = $children->arrayNode('strategies');
+
+        $strategiesNode->requiresAtLeastOneElement();
+        $strategiesNode->defaultValue([]);
+        $strategiesNode->arrayPrototype()
+            ->isRequired()
+            ->ignoreExtraKeys(false)
             ->children()
-                ->scalarNode('version')
-                    ->isRequired()
-                    ->cannotBeEmpty()
-                    ->validate()
-                        ->ifString()
-                        ->then(function ($value) {
-                            return Version::fromString($value);
-                        })
-                    ->end()
-                ->end()
-                ->arrayNode('strategies')
-                    ->requiresAtLeastOneElement()
-                    ->defaultValue([])
-                    ->arrayPrototype()
-                        ->isRequired()
-                        ->ignoreExtraKeys(false)
-                        ->children()
-                            ->enumNode('type')
-                                ->values(array_keys(static::$strategies))
-                                ->isRequired()
-                            ->end()
-                        ->end()
-                        ->validate()
-                            ->always(function ($value) {
-                                $type = $value['type'];
+                ->enumNode('type')
+                    ->values(array_keys(static::$strategies))
+                    ->isRequired();
 
-                                $class = static::getStrategyConfigurationClass($type);
-                                $configurationDefinition = new $class();
+        $strategiesNode->validate()
+            ->always(function (array $value) {
+                $type = $value['type'];
 
-                                return $this->getProcessor()->processConfiguration($configurationDefinition, [$value]);
-                            })
-                        ->end()
-                    ->end()
-                ->end()
-            ->end()
+                $class = static::getStrategyConfigurationClass($type);
+                $configurationDefinition = new $class();
+
+                return $this->getProcessor()->processConfiguration($configurationDefinition, [$value]);
+            })
         ;
         //@formatter:on
 
-        $this->addPattern($root->children(), 'branch_pattern', 'release/{MAJOR}.{MINOR}');
-        $this->addPattern($root->children(), 'tag_pattern', 'v{MAJOR}.{MINOR}.{PATCH}');
+        $this->addPattern($children, 'branch_pattern', 'release/{MAJOR}.{MINOR}');
+        $this->addPattern($children, 'tag_pattern', 'v{MAJOR}.{MINOR}.{PATCH}');
 
         return $treeBuilder;
     }
 
-    private static function getStrategyConfigurationClass(string $type)
+    /**
+     * @template T of ConfigurationInterface
+     * @psalm-return class-string<T>
+     */
+    private static function getStrategyConfigurationClass(string $type): string
     {
         if (!array_key_exists($type, static::$strategies)) {
             throw new InvalidConfigurationException(sprintf('The strategy %s is invalid', $type));
@@ -98,7 +106,7 @@ class VersionConfiguration extends AbstractConfiguration implements Configuratio
         return static::$strategies[$type];
     }
 
-    private function getProcessor()
+    private function getProcessor(): Processor
     {
         if (!$this->processor) {
             $this->processor = new Processor();

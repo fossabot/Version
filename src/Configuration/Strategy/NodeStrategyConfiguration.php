@@ -11,6 +11,7 @@
 namespace SoureCode\Version\Configuration\Strategy;
 
 use SoureCode\Version\Configuration\AbstractConfiguration;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -26,44 +27,43 @@ class NodeStrategyConfiguration extends AbstractConfiguration implements Configu
     {
         $treeBuilder = new TreeBuilder('node');
 
+        /**
+         * @var ArrayNodeDefinition $root
+         */
         $root = $treeBuilder->getRootNode();
+        $root->addDefaultsIfNotSet();
+        $children = $root->children();
 
         //@formatter:off
-        $root
-            ->addDefaultsIfNotSet()
-            ->children()
-                ->scalarNode('type')
-                    ->isRequired()
-                    ->cannotBeEmpty()
-                    ->validate()
-                        ->ifTrue(function ($value) {
-                            return 'node' !== $value;
-                        })
-                        ->thenInvalid('Invalid strategy configuration type.')
-                    ->end()
-                ->end()
-                ->enumNode('tool')
-                    ->values(['npm', 'yarn'])
-                    ->isRequired()
-                    ->cannotBeEmpty()
-                    ->defaultValue('npm')
-                ->end()
-                ->scalarNode('directory')
-                    ->cannotBeEmpty()
-                    ->defaultValue(getcwd())
-                    ->validate()
-                        ->always(function ($value) {
-                            if (!file_exists($value) || !is_dir($value)) {
-                                throw new InvalidConfigurationException(sprintf('The directory "%s" is invalid.', $value));
-                            }
-                        })
-                    ->end()
-                ->end()
-            ->end()
+        $children
+            ->scalarNode('type')
+                ->isRequired()
+                ->cannotBeEmpty()
+                ->validate()
+                    ->ifTrue(function (string $value) {
+                        return 'node' !== $value;
+                    })
+                    ->thenInvalid('Invalid strategy configuration type.');
+
+        $children->enumNode('tool')
+            ->values(['npm', 'yarn'])
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->defaultValue('npm');
+
+        $children->scalarNode('directory')
+            ->cannotBeEmpty()
+            ->defaultValue(getcwd())
+            ->validate()
+                ->always(function (string $value) {
+                    if (!file_exists($value) || !is_dir($value)) {
+                        throw new InvalidConfigurationException(sprintf('The directory "%s" is invalid.', $value));
+                    }
+                })
         ;
         //@formatter:on
 
-        $this->addPattern($root->children(), 'pattern', '{VERSION}');
+        $this->addPattern($children, 'pattern', '{VERSION}');
 
         return $treeBuilder;
     }

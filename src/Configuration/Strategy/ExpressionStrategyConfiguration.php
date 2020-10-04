@@ -11,6 +11,7 @@
 namespace SoureCode\Version\Configuration\Strategy;
 
 use SoureCode\Version\Configuration\AbstractConfiguration;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -26,41 +27,43 @@ class ExpressionStrategyConfiguration extends AbstractConfiguration implements C
     {
         $treeBuilder = new TreeBuilder('expression');
 
+        /**
+         * @var ArrayNodeDefinition $root
+         */
         $root = $treeBuilder->getRootNode();
+        $root->addDefaultsIfNotSet();
+        $children = $root->children();
 
         //@formatter:off
-        $root
-            ->addDefaultsIfNotSet()
-            ->children()
-                ->scalarNode('type')
-                    ->isRequired()
-                    ->cannotBeEmpty()
-                    ->validate()
-                        ->ifTrue(function ($value) {
-                            return 'expression' !== $value;
-                        })
-                        ->thenInvalid('Invalid strategy configuration type.')
-                    ->end()
-                ->end()
-                ->scalarNode('expression')
-                    ->isRequired()
-                    ->cannotBeEmpty()
-                    ->validate()
-                        ->always(function ($value) {
-                            if (false === @preg_match($value, null)) {
-                                throw new InvalidConfigurationException(sprintf('The expression "%s" is invalid.', $value));
-                            }
+        $children
+            ->scalarNode('type')
+                ->isRequired()
+                ->cannotBeEmpty()
+                ->validate()
+                    ->ifTrue(function (string $value) {
+                        return 'expression' !== $value;
+                    })
+                    ->thenInvalid('Invalid strategy configuration type.');
 
-                            return $value;
-                        })
-                    ->end()
-                ->end()
-            ->end()
+        $children->scalarNode('expression')
+                ->isRequired()
+                ->cannotBeEmpty()
+                ->validate()
+                    ->always(function (string $value) {
+                        /*
+                         * @var mixed $value
+                         */
+                        if (false === @preg_match($value, '')) {
+                            throw new InvalidConfigurationException(sprintf('The expression "%s" is invalid.', $value));
+                        }
+
+                        return $value;
+                    })
         ;
         //@formatter:on
 
-        $this->addPattern($root->children(), 'replacement')->isRequired();
-        $this->addFindFiles($root->children());
+        $this->addPattern($children, 'replacement')->isRequired();
+        $this->addFindFiles($children);
 
         return $treeBuilder;
     }

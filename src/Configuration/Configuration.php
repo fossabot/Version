@@ -33,7 +33,7 @@ class Configuration
     ];
 
     /**
-     * @var StrategyInterface[]
+     * @var StrategyInterface[] $strategies
      */
     private ?array $strategies = null;
 
@@ -45,7 +45,7 @@ class Configuration
     }
 
     /**
-     * @return StrategyInterface[]
+     * @return object[]
      */
     public function getStrategies(): array
     {
@@ -64,7 +64,14 @@ class Configuration
         return $this->strategies;
     }
 
-    private static function getStrategyClass(string $type)
+    /**
+     * @template T of StrategyInterface
+     *
+     * @param string $type
+     * @psalm-return class-string<T>
+     * @return string
+     */
+    private static function getStrategyClass(string $type): string
     {
         if (!array_key_exists($type, static::$strategyMapping)) {
             throw new InvalidArgumentException(sprintf('The strategy "%s" is invalid', $type));

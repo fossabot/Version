@@ -12,6 +12,7 @@ namespace SoureCode\Version\Configuration;
 
 use SoureCode\Version\Pattern;
 use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition;
 
 /**
  * Class AbstractConfiguration.
@@ -20,18 +21,16 @@ use Symfony\Component\Config\Definition\Builder\NodeBuilder;
  */
 abstract class AbstractConfiguration
 {
-    protected function addPattern(NodeBuilder $builder, string $name, string $default = null)
+    protected function addPattern(NodeBuilder $builder, string $name, string $default = null): ScalarNodeDefinition
     {
         //@formatter:off
-        $node = $builder
-            ->scalarNode($name)
-                ->cannotBeEmpty()
-                ->validate()
-                    ->always()
-                    ->then(function ($value) {
-                        return new Pattern($value);
-                    })
-                ->end()
+        $node = $builder->scalarNode($name);
+        $node->cannotBeEmpty();
+        $node->validate()
+            ->always()
+            ->then(function (string $value) {
+                return new Pattern($value);
+            })
         ;
         //@formatter:on
 
@@ -42,59 +41,49 @@ abstract class AbstractConfiguration
         return $node;
     }
 
-    protected function addFindFiles(NodeBuilder $builder)
+    protected function addFindFiles(NodeBuilder $builder): void
     {
         //@formatter:off
-        $builder
-            ->arrayNode('path')
-                ->requiresAtLeastOneElement()
-                ->beforeNormalization()
-                    ->ifString()
-                    ->then(function ($value) {
-                        return [$value];
-                    })
-                ->end()
-                ->scalarPrototype()
-                    ->cannotBeEmpty()
-                ->end()
-            ->end()
-            ->arrayNode('notPath')
-                ->requiresAtLeastOneElement()
-                ->beforeNormalization()
-                    ->ifString()
-                    ->then(function ($value) {
-                        return [$value];
-                    })
-                ->end()
-                ->scalarPrototype()
-                    ->cannotBeEmpty()
-                ->end()
-            ->end()
-            ->arrayNode('name')
-                ->isRequired()
-                ->requiresAtLeastOneElement()
-                ->beforeNormalization()
-                    ->ifString()
-                    ->then(function ($value) {
-                        return [$value];
-                    })
-                ->end()
-                ->scalarPrototype()
-                    ->cannotBeEmpty()
-                ->end()
-            ->end()
-            ->arrayNode('notName')
-                ->requiresAtLeastOneElement()
-                ->beforeNormalization()
-                    ->ifString()
-                    ->then(function ($value) {
-                        return [$value];
-                    })
-                ->end()
-                ->scalarPrototype()
-                    ->cannotBeEmpty()
-                ->end()
-            ->end()
+        $pathNode = $builder->arrayNode('path');
+        $pathNode->requiresAtLeastOneElement();
+        $pathNode->beforeNormalization()
+            ->ifString()
+            ->then(function (string $value) {
+                return [$value];
+            });
+        $pathNode->scalarPrototype()
+            ->cannotBeEmpty();
+
+        $notPathNode = $builder->arrayNode('notPath');
+        $notPathNode->requiresAtLeastOneElement();
+        $notPathNode->beforeNormalization()
+            ->ifString()
+            ->then(function (string $value) {
+                return [$value];
+            });
+        $notPathNode->scalarPrototype()
+            ->cannotBeEmpty();
+
+        $nameNode = $builder->arrayNode('name');
+        $nameNode->isRequired();
+        $nameNode->requiresAtLeastOneElement();
+        $nameNode->beforeNormalization()
+            ->ifString()
+            ->then(function (string $value) {
+                return [$value];
+            });
+        $nameNode->scalarPrototype()
+            ->cannotBeEmpty();
+
+        $notNameNode = $builder->arrayNode('notName');
+        $notNameNode->requiresAtLeastOneElement();
+        $notNameNode->beforeNormalization()
+            ->ifString()
+            ->then(function (string $value) {
+                return [$value];
+            });
+        $notNameNode->scalarPrototype()
+            ->cannotBeEmpty()
         ;
         //@formatter:on
     }

@@ -12,6 +12,7 @@ namespace SoureCode\Version\Command;
 
 use SoureCode\Version\Configuration\Configuration;
 use SoureCode\Version\Configuration\VersionConfiguration;
+use SoureCode\Version\Exception\RuntimeException;
 use SoureCode\Version\Loader\JsonFileLoader;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
@@ -25,20 +26,34 @@ use Symfony\Component\Console\Command\Command;
  */
 abstract class AbstractVersionCommand extends Command
 {
-    protected function getConfiguration()
+    protected function getConfiguration(): Configuration
     {
         $configurationDirectories = [
-            $this->homeDirectory(),
             getcwd(),
         ];
 
+        $homeDirectory = $this->homeDirectory();
+
+        if ($homeDirectory) {
+            $configurationDirectories[] = $homeDirectory;
+        }
+
         $fileLocator = new FileLocator($configurationDirectories);
+
+        /**
+         * @var string[] $configurationFiles
+         */
         $configurationFiles = $fileLocator->locate('version.json', null, false);
         $loaderResolver = new LoaderResolver([new JsonFileLoader($fileLocator)]);
         $configurations = [];
 
         foreach ($configurationFiles as $configurationFile) {
             $loader = $loaderResolver->resolve($configurationFile);
+
+            if (!$loader) {
+                throw new RuntimeException(sprintf('Missing loader for configuration "%s".', $configurationFile));
+            }
+
             $configurations[] = $loader->load($configurationFile);
         }
 
@@ -50,7 +65,7 @@ abstract class AbstractVersionCommand extends Command
         return new Configuration($configuration);
     }
 
-    private function homeDirectory()
+    private function homeDirectory(): ?string
     {
         // Cannot use $_SERVER superglobal since that's empty during UnitUnishTestCase
         // getenv('HOME') isn't set on Windows and generates a Notice.

@@ -23,18 +23,18 @@ class GetCommand extends AbstractVersionCommand
 {
     protected static $defaultName = 'get';
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('get')
             ->setDescription('Prints the current version');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $configuration = $this->getConfiguration();
         $version = $configuration->getVersion();
 
-        $output->writeln($version);
+        $output->writeln((string) $version);
 
         return Command::SUCCESS;
     }
