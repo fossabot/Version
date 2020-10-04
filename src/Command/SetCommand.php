@@ -10,9 +10,9 @@
 
 namespace SoureCode\Version\Command;
 
-use phpDocumentor\Reflection\Types\Null_;
 use function get_class;
 use function is_array;
+use function is_string;
 use SoureCode\SemanticVersion\Version;
 use SoureCode\Version\Exception\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;

@@ -33,7 +33,7 @@ class Configuration
     ];
 
     /**
-     * @var StrategyInterface[] $strategies
+     * @var StrategyInterface[]
      */
     private ?array $strategies = null;
 
@@ -67,9 +67,7 @@ class Configuration
     /**
      * @template T of StrategyInterface
      *
-     * @param string $type
      * @psalm-return class-string<T>
-     * @return string
      */
     private static function getStrategyClass(string $type): string
     {
